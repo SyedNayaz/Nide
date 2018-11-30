@@ -1,0 +1,84 @@
+var express=require('express');
+var app=express();
+var morgan=require('morgan');
+//var mongoose=require('mongoose');
+
+//Body Parser 
+var bodyParser=require("body-parser");
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+app.use(express.static('public'));
+//To know errors
+app.use(morgan('dev'));
+//When root is opened send log.html
+app.get('/',function(req,res){
+	res.sendFile(__dirname+'/Log.html');
+});
+//After we click on submit buuton
+app.post('/submit',function(req,res){
+  var user=req.body.name;
+  var pwd=req.body.pwd;
+  
+
+  
+  //Connection to database
+  var MongoClient =require('mongodb').MongoClient
+	MongoClient.connect('mongodb://localhost:27017/example',function(err,db){
+	if(err) {
+		console.log('Connection Failed');
+	}
+	//Query for authentication
+	db.collection('store').find({"user":user,"pwd":pwd},{"custID":1,"_id":0}).toArray(function (err, result)
+	{
+		if (err) throw err
+	
+	
+		//If no customer id found for the username and password
+		else if(result.length==0  )
+		{
+			//res.sendFile(__dirname+'/Log.html');
+			//res.write(" Please Enter correct username or password");
+			res.redirect('/'); // main page url
+			res.end();
+		
+		}
+		//After the authentication
+		else
+		{
+			res.redirect('/hello')
+			app.get('/hello',function(req,res){
+			res.sendFile(__dirname+'/record.html');
+					
+					
+			//User selects for  record 			
+			MongoClient.connect('mongodb://localhost:27017/example',function(err,db){
+			if(err) 
+			{
+				console.log('Connection Failed');
+			}
+			app.get('/Record1.html',function(res1,req1){
+			db.collection('store').find().toArray(function (err, result) {
+			//res.write(result);
+			res.end();
+			res.write(result);
+			
+			});
+			});
+			});
+			});
+		}
+		res.end();
+			
+		
+	
+  });
+});
+		
+
+});
+//To listen to a port
+var port=process.env.PORT||8000;
+app.listen(port,function(){
+	console.log(`Listening on port ${port}`);
+});
